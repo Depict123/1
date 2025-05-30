@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>音乐播放平台</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+        }
+
+        /* 登录界面样式 */
+        .login-container {
+            width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* 音乐库界面 */
+        .music-library {
+            display: none; /* 默认隐藏 */
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .music-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .music-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .music-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .music-info {
+            margin-bottom: 15px;
+        }
+
+        .music-info h3 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .music-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 播放控制 */
+        .controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            background: #007bff;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-info {
+            font-size: 12px;
+            color: #666;
+            margin: 0 10px;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background: #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            border-radius: 5px;
+            width: 0%;
+        }
+
+        /* 音量控制 */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .volume-icon {
+            margin-right: 10px;
+            color: #666;
+        }
+
+        .volume-slider {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div class="login-container">
+        <form class="login-form" id="loginForm">
+            <h2>用户登录</h2>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="用户名" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="密码" required>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+    </div>
+
+    <!-- 音乐库界面 -->
+    <div class="music-library" id="musicLibrary">
+        <div class="music-grid" id="musicGrid"></div>
+    </div>
+
+    <script>
+        // 登录处理
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // 简单验证
+            if(username && password) {
+                document.querySelector('.login-container').style.display = 'none';
+                document.getElementById('musicLibrary').style.display = 'block';
+                loadMusicLibrary();
+            }
+        });
+
+        // 音乐数据（示例）
+        const musicLibrary = [
+            { title: '你被写在我的歌里', artist: '鹅鹅鹅', file: 'audio/你被写在我的歌里.mp3' },
+            { title: '枫', artist: '鹅鹅鹅', file: 'audio/枫.mp3' },
+            { title: '怎么了', artist: '鹅鹅鹅', file: 'audio/怎么了.mp3' },
+            { title: '找到你是我最伟大的成功', artist: '鹅鹅鹅', file: 'audio/找到你是我最伟大的成功.mp3' },
+            { title: '微微', artist: '鹅鹅鹅', file: 'audio/微微.mp3' },
+            { title: '他不懂', artist: '鹅鹅鹅', file: 'audio/他不懂.mp3' },
+            { title: '说好的幸福呢', artist: '鹅鹅鹅', file: 'audio/说好的幸福呢.mp3' },
+            { title: '如果说', artist: '鹅鹅鹅', file: 'audio/如果说.mp3' },
+            { title: '目及皆是你', artist: '鹅鹅鹅', file: 'audio/目及皆是你.mp3' },
+            { title: '红尘客栈', artist: '鹅鹅鹅', file: 'audio/红尘客栈.mp3' },
+            { title: 'Pinky murder', artist: '鹅鹅鹅', file: 'audio/Pinky murder.mp3' },
+            { title: 'A Sad Me In Your Eyes', artist: '鹅鹅鹅', file: 'audio/A Sad Me In Your Eyes.mp3' },
+            { title: '鸽子', artist: '鹅鹅鹅', file: 'audio/鸽子.mp3' }
+        ];
+
+        // 当前播放状态
+        let currentAudio = null;
+        let currentCard = null;
+
+        // 加载音乐库
+        function loadMusicLibrary() {
+            const grid = document.getElementById('musicGrid');
+            grid.innerHTML = '';
+
+            musicLibrary.forEach((music, index) => {
+                const card = document.createElement('div');
+                card.className = 'music-card';
+                card.innerHTML = `
+                    <div class="music-info">
+                        <h3>${music.title}</h3>
+                        <p>${music.artist}</p>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-${index}"></div>
+                    </div>
+                    <div class="controls">
+                        <button class="play-btn" id="play-${index}">▶</button>
+                        <span class="time-info" id="time-${index}">0:00 / 0:00</span>
+                    </div>
+                    <div class="volume-control">
+                        <span class="volume-icon">🔊</span>
+                        <input type="range" class="volume-slider" id="volume-${index}" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                `;
+                
+                // 播放/暂停按钮事件
+                const playBtn = card.querySelector(`#play-${index}`);
+                const progressBar = card.querySelector(`#progress-${index}`);
+                const progressContainer = card.querySelector('.progress-container');
+                const timeInfo = card.querySelector(`#time-${index}`);
+                const volumeSlider = card.querySelector(`#volume-${index}`);
+                
+                let audio = new Audio(music.file);
+                
+                // 点击播放按钮
+                playBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    togglePlay(audio, index, card);
+                });
+                
+                // 点击进度条
+                progressContainer.addEventListener('click', function(e) {
+                    const clickPosition = e.offsetX;
+                    const progressWidth = this.clientWidth;
+                    const duration = audio.duration || 1;
+                    audio.currentTime = (clickPosition / progressWidth) * duration;
+                });
+                
+                // 音量控制
+                volumeSlider.addEventListener('input', function() {
+                    audio.volume = this.value;
+                });
+                
+                // 更新进度条和时间
+                audio.addEventListener('timeupdate', function() {
+                    if (!isNaN(audio.duration)) {
+                        const progressPercent = (audio.currentTime / audio.duration) * 100;
+                        progressBar.style.width = `${progressPercent}%`;
+                        
+                        // 更新时间显示
+                        const currentMinutes = Math.floor(audio.currentTime / 60);
+                        const currentSeconds = Math.floor(audio.currentTime % 60).toString().padStart(2, '0');
+                        const durationMinutes = Math.floor(audio.duration / 60);
+                        const durationSeconds = Math.floor(audio.duration % 60).toString().padStart(2, '0');
+                        
+                        timeInfo.textContent = `${currentMinutes}:${currentSeconds} / ${durationMinutes}:${durationSeconds}`;
+                    }
+                });
+                
+                // 歌曲结束时重置
+                audio.addEventListener('ended', function() {
+                    playBtn.textContent = '▶';
+                    progressBar.style.width = '0%';
+                    timeInfo.textContent = `0:00 / ${Math.floor(audio.duration / 60)}:${Math.floor(audio.duration % 60).toString().padStart(2, '0')}`;
+                });
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // 播放/暂停切换
+        function togglePlay(audio, index, card) {
+            const playBtn = card.querySelector(`#play-${index}`);
+            
+            // 如果点击的是当前正在播放的歌曲
+            if (currentAudio === audio) {
+                if (audio.paused) {
+                    audio.play();
+                    playBtn.textContent = '❚❚';
+                } else {
+                    audio.pause();
+                    playBtn.textContent = '▶';
+                }
+            } 
+            // 如果点击的是其他歌曲
+            else {
+                // 停止当前播放的歌曲
+                if (currentAudio) {
+                    currentAudio.pause();
+                    if (currentCard) {
+                        const prevPlayBtn = currentCard.querySelector('.play-btn');
+                        prevPlayBtn.textContent = '▶';
+                    }
+                }
+                
+                // 播放新歌曲
+                currentAudio = audio;
+                currentCard = card;
+                audio.currentTime = 0;
+                audio.play();
+                playBtn.textContent = '❚❚';
+            }
+        }
+    </script>
+</body>
+</html>
